@@ -5,6 +5,7 @@ public class Assignment7Driver {
     public static void main(String[] args) {
         Graph g1 = buildGraph("demands1.txt");
         int flow1 = g1.findMaxFlow(0, 5, true);
+        g1.displayResidualGraph();
         System.out.printf("Total Flow: %d\n", flow1);
         g1.findMinCut(0);
 
