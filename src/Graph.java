@@ -23,6 +23,7 @@ public class Graph {
 
         // This adds the actual requested edge, along with its capacity
         vertices[source].addEdge(source, destination, capacity);
+        this.vertices[destination].addEdge(destination, source, 0);
 
         return true;
     }
@@ -46,19 +47,19 @@ public class Graph {
     private boolean hasAugmentingPath(int s, int t) {
         boolean[] visited = new boolean[this.rGraph.length];
         Queue<Integer> queue = new LinkedList<>();
-        int[] parent = new int[this.rGraph.length];
-        Arrays.fill(parent, -1);
+
         queue.add(s);
         visited[s] = true;
 
         while (!queue.isEmpty() && parent[t] == -1) {
             int v = queue.remove();
 
-            for (int w=0; w < this.rGraph.length; w++) {
-                if (this.rGraph[v][w] > 0 && !visited[w]) {
-                    queue.add(w);
-                    parent[w] = v;
-                    visited[w] = true;
+//            for (int w=0; w < this.rGraph.length; w++) {
+            for (GraphNode.EdgeInfo w : this.vertices[v].successor) {
+//                if (this.rGraph[v][w] > 0 && !visited[w]) {
+//                    queue.add(w);
+//                    parent[w] = v;
+//                    visited[w] = true;
                 }
             }
         }
