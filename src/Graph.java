@@ -22,7 +22,7 @@ public class Graph {
         if (destination < 0 || destination >= vertices.length) return false;
 
         // This adds the actual requested edge, along with its capacity
-        vertices[source].addEdge(source, destination, capacity);
+        this.vertices[source].addEdge(source, destination, capacity);
         this.vertices[destination].addEdge(destination, source, 0);
 
         return true;
@@ -32,38 +32,89 @@ public class Graph {
      * Algorithm to find max-flow in a network
      */
     public int findMaxFlow(int s, int t, boolean report) {
-        // TODO:
         fillResidualGraph();
-        while (hasAugmentingPath(s, t)) {
-            System.out.println("First");
-            break;
+        int[][] holderGraph = new int[this.rGraph.length][this.rGraph.length];
+        int totalFlow = 0;
+        int availableFlow;
+        int currS;
+        int currT;
+        if (report) {
+            System.out.printf("-- Max Flow: %s --\n", this.name);
         }
-        return 0;
-    }
 
-    /**
-     * Algorithm to find an augmenting path in a network
-     */
-    private boolean hasAugmentingPath(int s, int t) {
-        boolean[] visited = new boolean[this.rGraph.length];
-        Queue<Integer> queue = new LinkedList<>();
+        while (hasAugmentingPath(s, t)) {
+            ArrayList<Integer> currPath = new ArrayList<>();
+            currPath.add(s);
+            availableFlow = Integer.MAX_VALUE;
 
-        queue.add(s);
-        visited[s] = true;
+            currT = t;
+            while (currT != s) {
+                currPath.add(1, currT);
+                currS = this.vertices[currT].parent;
+                availableFlow = Math.min(availableFlow, this.rGraph[currS][currT]);
+                currT = currS;
+            }
 
-        while (!queue.isEmpty() && parent[t] == -1) {
-            int v = queue.remove();
+            currT = t;
+            while (currT != s) {
+                currS = this.vertices[currT].parent;
+                if (report) {
+                    holderGraph[currS][currT] += availableFlow;
+                }
 
-//            for (int w=0; w < this.rGraph.length; w++) {
-            for (GraphNode.EdgeInfo w : this.vertices[v].successor) {
-//                if (this.rGraph[v][w] > 0 && !visited[w]) {
-//                    queue.add(w);
-//                    parent[w] = v;
-//                    visited[w] = true;
+                this.rGraph[currS][currT] -= availableFlow;
+                this.rGraph[currT][currS] += availableFlow;
+                currT = currS;
+            }
+
+            totalFlow += availableFlow;
+
+            if (report) {
+                System.out.printf("Flow %d: ", availableFlow);
+                for (int i : currPath) {
+                    System.out.printf("%d ", i);
+                }
+                System.out.println();
+            }
+        }
+
+        if (report) {
+            for (int i=0; i < holderGraph.length; i++) {
+                for (int j=0; j < holderGraph.length; j++) {
+                    if (holderGraph[i][j] > 0) {
+                        System.out.printf("Edge(%d, %d) transports %d items\n", i, j, holderGraph[i][j]);
+                    }
                 }
             }
         }
-        return visited[t];
+
+        return totalFlow;
+    }
+
+    /**k
+     * Algorithm to find an augmenting path in a network
+     */
+    private boolean hasAugmentingPath(int s, int t) {
+        Queue<Integer> queue = new LinkedList<>();
+        for (GraphNode x : this.vertices) {
+            x.parent = -1;
+            x.visited = false;
+        }
+        queue.add(s);
+        this.vertices[s].visited = true;
+
+        while (!queue.isEmpty() && this.vertices[t].parent == -1) {
+            int v = queue.remove();
+
+            for (GraphNode.EdgeInfo w : this.vertices[v].successor) {
+                if (this.rGraph[v][w.to] > 0 && !this.vertices[w.to].visited && this.vertices[s] != this.vertices[w.to]) {
+                    this.vertices[w.to].visited = true;
+                    this.vertices[w.to].parent = v;
+                    queue.add(w.to);
+                }
+            }
+        }
+        return this.vertices[t].parent != -1;
     }
 
     /**
@@ -76,7 +127,7 @@ public class Graph {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("The Graph " + name + " \n");
+        sb.append("The Graph ").append(name).append(" \n");
         for (var vertex : vertices) {
             sb.append((vertex.toString()));
         }
@@ -92,9 +143,9 @@ public class Graph {
     }
 
     public void displayResidualGraph() {
-        for (int i=0; i < this.rGraph.length; i++) {
-            for (int j=0; j < this.rGraph[i].length; j++) {
-                System.out.print(this.rGraph[i][j] + " ");
+        for (int[] ints : this.rGraph) {
+            for (int anInt : ints) {
+                System.out.print(anInt + " ");
             }
             System.out.println();
         }
