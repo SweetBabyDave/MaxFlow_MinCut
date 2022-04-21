@@ -1,9 +1,11 @@
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class Graph {
     private final GraphNode[] vertices;  // Adjacency list for graph.
     private final String name;  //The file from which the graph was created.
     private final int[][] rGraph;
+    private final int[][] rGraphFlow;
 
     public Graph(String name, int vertexCount) {
         this.name = name;
@@ -14,6 +16,7 @@ public class Graph {
         }
 
         this.rGraph = new int[vertexCount][vertexCount];
+        this.rGraphFlow = new int[vertexCount][vertexCount];
     }
 
     public boolean addEdge(int source, int destination, int capacity) {
@@ -33,7 +36,6 @@ public class Graph {
      */
     public int findMaxFlow(int s, int t, boolean report) {
         fillResidualGraph();
-        int[][] holderGraph = new int[this.rGraph.length][this.rGraph.length];
         int totalFlow = 0;
         int availableFlow;
         int currS;
@@ -59,7 +61,7 @@ public class Graph {
             while (currT != s) {
                 currS = this.vertices[currT].parent;
                 if (report) {
-                    holderGraph[currS][currT] += availableFlow;
+                    this.rGraphFlow[currS][currT] += availableFlow;
                 }
 
                 this.rGraph[currS][currT] -= availableFlow;
@@ -77,12 +79,12 @@ public class Graph {
                 System.out.println();
             }
         }
-
+        System.out.println();
         if (report) {
-            for (int i=0; i < holderGraph.length; i++) {
-                for (int j=0; j < holderGraph.length; j++) {
-                    if (holderGraph[i][j] > 0) {
-                        System.out.printf("Edge(%d, %d) transports %d items\n", i, j, holderGraph[i][j]);
+            for (int i=0; i < this.rGraphFlow.length; i++) {
+                for (int j=0; j < this.rGraphFlow.length; j++) {
+                    if (this.rGraphFlow[i][j] > 0) {
+                        System.out.printf("Edge(%d, %d) transports %d items\n", i, j, this.rGraphFlow[i][j]);
                     }
                 }
             }
@@ -121,7 +123,45 @@ public class Graph {
      * Algorithm to find the min-cut edges in a network
      */
     public void findMinCut(int s) {
-        // TODO:
+        ArrayList<Integer> setR = new ArrayList<>();
+        ArrayList<Integer> realSet = new ArrayList<>();
+        int currS;
+
+        for (GraphNode x : this.vertices) {
+            x.visited = false;
+        }
+
+        // This while loop finds the set of all of the vertices that can be accessed from the source.
+        setR.add(s);
+        while (!setR.isEmpty()) {
+            currS = setR.remove(0);
+            realSet.add(currS);
+
+            if (!this.vertices[currS].visited) {
+                for (int i = 0; i < this.rGraph.length; i++) {
+                    if (this.rGraph[currS][i] != 0) {
+                        if (!realSet.contains(i)) {
+                            setR.add(i);
+                            this.vertices[currS].visited = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // This then finds out which vertices were not in the set and finds the paths to cut off.
+        System.out.println();
+        System.out.printf("-- Min Cut: %s --\n", this.name);
+        for (int i=0; i < this.vertices.length; i++) {
+            if (!realSet.contains(i)) {
+                for (var r : this.vertices[i].successor) {
+                    if (realSet.contains(r.to) && this.rGraphFlow[r.to][r.from] != 0) {
+                        System.out.printf("Min Cut Edge: (%d, %d) : %d\n", r.to, r.from, this.rGraphFlow[r.to][r.from]);
+                    }
+                }
+            }
+        }
+        System.out.println();
     }
 
     public String toString() {
